@@ -26,7 +26,18 @@ protected:
 	void OnUpdate();
 	void OnClick();
 };
-
+class CGroupTab
+{
+public:
+	std::string name;
+	int id;
+public:
+	CGroupTab(std::string _name, int _id)
+	{
+		this->name = _name;
+		this->id = _id;
+	}
+};
 class CGroupBox : public CControl
 {
 public:
@@ -40,7 +51,26 @@ protected:
 	void OnUpdate();
 	void OnClick();
 };
-
+class CGroupBoxNultiTabs : public CControl
+{
+public:
+	CGroupBoxNultiTabs();
+	void SetText(std::string text);
+	void PlaceLabledControl(int g_tab, std::string Label, CTab *Tab, CControl* control);
+	void AddTab(CGroupTab t);
+	int selected_tab = 0;
+	std::vector<CGroupTab> group_tabs;
+protected:
+	std::vector<int> reset_tabs;
+	int Items;
+	std::string Text;
+	int last_y;
+	int last_control_height;
+	bool initialized = false;
+	void Draw(bool hover);
+	void OnUpdate();
+	void OnClick();
+};
 class CSlider : public CControl
 {
 public:

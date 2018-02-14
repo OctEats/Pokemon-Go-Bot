@@ -26,7 +26,15 @@ enum UIControlTypes
 	UIC_CheckBox = 1,
 	UIC_Slider,
 	UIC_KeyBind,
-	UIC_ComboBox
+	UIC_ComboBox,
+	UIC_ItemSelector,
+	UIC_Button,
+	UIC_MultiBox,
+	UIC_GroupBox,
+	UIC_ListBox,
+	UIC_ColorSelector,
+	UIC_Label,
+	UIC_TextField
 };
 
 // Base class for GUI controls
@@ -42,6 +50,11 @@ public:
 	void SetFileId(std::string fid);
 
 	bool Flag(int f);
+	int FileControlType;
+	CControl* parent_group;
+	int g_tab = 0;
+
+	bool should_function = true;
 protected:
 	int m_x, m_y;
 	int m_iWidth, m_iHeight;
@@ -49,7 +62,6 @@ protected:
 	CWindow* parent;
 
 	std::string FileIdentifier;
-	int FileControlType;
 
 	virtual void Draw(bool) = 0;
 	virtual void OnUpdate() = 0;

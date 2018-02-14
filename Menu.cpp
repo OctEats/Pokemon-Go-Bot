@@ -41,7 +41,8 @@ void AyyWareWindow::Setup()
 	//RegisterTab(&LegitBotTab);
 //	RegisterTab(&VisualsTab);
 	//RegisterTab(&MiscTab);
-	//RegisterTab(&ExtraTab);
+	RegisterTab(&ExtraTab);
+	RegisterTab(&ExtraTab2);
 
 	RECT Client = GetClientArea();
 	Client.bottom -= 29;
@@ -50,8 +51,8 @@ void AyyWareWindow::Setup()
 	//LegitBotTab.Setup();
 	//VisualsTab.Setup();
 	//MiscTab.Setup();
-	//ExtraTab.Setup();
-
+	ExtraTab.Setup();
+	ExtraTab2.Setup();
 #pragma region Bottom Buttons
 	SaveButton.SetText("Save Configuration");
 	SaveButton.SetCallback(SaveCallbk);
@@ -87,7 +88,25 @@ void AyyWareWindow::Setup()
 }
 void CExtraTab::Setup()
 {
-	SetTitle("a");
+	SetTitle("aim");
+	GroupBoxTest.SetPosition(78, -32);
+	GroupBoxTest.SetText("");
+	GroupBoxTest.AddTab(CGroupTab("main", 1));
+	GroupBoxTest.AddTab(CGroupTab("position", 2));
+	GroupBoxTest.AddTab(CGroupTab("target", 3));
+	GroupBoxTest.AddTab(CGroupTab("accuracy", 4));
+	GroupBoxTest.SetSize(290, 290);
+	RegisterControl(&GroupBoxTest);
+
+	TestCheckbox.SetFileId("sad");
+	GroupBoxTest.PlaceLabledControl(1, "sad", this, &TestCheckbox);
+
+	TestCheckbox2.SetFileId("woah");
+	GroupBoxTest.PlaceLabledControl(2, "test", this, &TestCheckbox2);
+}
+void CExtraTab2::Setup()
+{
+	SetTitle("visual");
 }
 void CRageBotTab::Setup()
 {

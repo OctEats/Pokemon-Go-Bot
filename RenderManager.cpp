@@ -48,7 +48,7 @@ void Render::Initialise()
 	Fonts::MenuText = Interfaces::Surface->FontCreate();
 	Fonts::TabIcon = Interfaces::Surface->FontCreate();
 
-	Interfaces::Surface->SetFontGlyphSet(Fonts::Menu, "DINPro-Regular", 14, 500, 0, 0, FONTFLAG_ANTIALIAS);
+	Interfaces::Surface->SetFontGlyphSet(Fonts::Menu, "Courier New", 14, 400, 0, 0, FONTFLAG_OUTLINE);
 	Interfaces::Surface->SetFontGlyphSet(Fonts::MenuBold, "DINPro-Regular", 14, 900, 0, 0, FONTFLAG_ANTIALIAS);
 	Interfaces::Surface->SetFontGlyphSet(Fonts::ESP, "Calibri", 14, 500, 0, 0, FONTFLAG_ANTIALIAS | FONTFLAG_DROPSHADOW);
 	Interfaces::Surface->SetFontGlyphSet(Fonts::MenuText, "Calibri", 16, 500, 0, 0, FONTFLAG_ANTIALIAS);

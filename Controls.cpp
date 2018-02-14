@@ -172,6 +172,162 @@ void CGroupBox::OnUpdate() {}
 void CGroupBox::OnClick() {}
 #pragma endregion Implementations of the Group Box functions
 
+#pragma region GroupBox
+CGroupBoxNultiTabs::CGroupBoxNultiTabs()
+{
+	Items = 1;
+	last_y = 0;
+	m_Flags = UIFlags::UI_Drawable | UIFlags::UI_RenderFirst;
+	Text = "Default";
+	FileIdentifier = "Default";
+	FileControlType = UIControlTypes::UIC_GroupBox;
+}
+void CGroupBoxNultiTabs::Draw(bool hover)
+{
+	POINT a = GetAbsolutePos();
+	RECT txtSize = Render::get_text_size(Text.c_str(), Render::Fonts::Menu);
+	
+	
+	if (group_tabs.size())
+	{
+
+		for (int i = 0; i < group_tabs.size(); i++)
+		{
+			RECT text_size = Render::get_text_size(group_tabs[i].name.c_str(), Render::Fonts::Menu);
+
+			int width = m_iWidth;
+		
+			int tab_length = (width / group_tabs.size());
+
+			int text_position[] = {
+				(a.x + (tab_length * (i)) - (tab_length / 2)),
+				a.y + 15 - (text_size.bottom / 2)
+			};
+
+			RECT tab_area = {
+				(a.x) + (tab_length * i - 1),
+				a.y,
+				tab_length,
+				21
+			};
+
+			if (GetAsyncKeyState(VK_LBUTTON))
+			{
+				if (GUI.IsMouseInRegion(tab_area))
+				{
+					selected_tab = group_tabs[i].id;
+				}
+			}
+		
+				
+			if (selected_tab == group_tabs[i].id)
+			{
+				Render::Clear(tab_area.left, tab_area.top, tab_area.right, tab_area.bottom, Color(50, 50, 50, 255));
+				Render::Outline(tab_area.left, tab_area.top, tab_area.right, tab_area.bottom, Color(0, 0, 0, 255));
+				Render::Text(text_position[0] - (text_size.right / 2), text_position[1], Color(255, 255, 255, 245), Render::Fonts::Menu, group_tabs[i].name.c_str());
+			}
+			else if (selected_tab != group_tabs[i].id)
+			{
+				Render::Clear(tab_area.left, tab_area.top, tab_area.right, tab_area.bottom, Color(121, 121, 121, 255));
+				Render::Outline(tab_area.left, tab_area.top, tab_area.right, tab_area.bottom, Color(0, 0, 0, 255));
+				Render::Text(text_position[0] - (text_size.right / 2), text_position[1], Color(255, 255, 255, 255), Render::Fonts::Menu, group_tabs[i].name.c_str());
+			}
+
+			
+		}
+	}
+
+
+}
+void CGroupBoxNultiTabs::SetText(std::string text)
+{
+	Text = text;
+}
+
+void CGroupBoxNultiTabs::PlaceLabledControl(int g_tab, std::string Label, CTab *Tab, CControl* control) {
+	bool has_tabs = group_tabs.size() ? 1 : 0;
+
+	if (has_tabs) {
+		bool has_reset = false;
+
+		for (int i = 0; i < reset_tabs.size(); i++) {
+			if (reset_tabs[i] == g_tab)
+				has_reset = true;
+		}
+
+		if (!has_reset) {
+			initialized = false;
+			reset_tabs.push_back(g_tab);
+		}
+	}
+
+	if (!initialized) {
+		Items = 0;
+		last_y = has_tabs ? m_y + 48 : m_y + 8;
+		initialized = true;
+	}
+
+	bool add_label_y = true;
+	bool is_checkbox = control->FileControlType == UIControlTypes::UIC_CheckBox;
+	bool is_label = control->FileControlType == UIControlTypes::UIC_Label;
+	bool is_keybind = control->FileControlType == UIControlTypes::UIC_KeyBind;
+	bool is_color = control->FileControlType == UIControlTypes::UIC_ColorSelector;
+
+	int x = m_x + 38;
+	int y = last_y;
+	int control_width, control_height;
+	control->GetSize(control_width, control_height);
+
+	CLabel* label = new CLabel;
+	label->SetPosition(x, y);
+	label->SetText(Label);
+	label->parent_group = this;
+	label->g_tab = g_tab ? g_tab : 0;
+	Tab->RegisterControl(label);
+
+	if (is_checkbox || is_label || is_color) add_label_y = false;
+
+	if (Label != "" && add_label_y && !is_keybind) {
+		RECT label_size = Render::get_text_size(Label.c_str(), Render::Fonts::Menu);
+		last_y += 14;
+		y = last_y;
+	}
+
+	if (!is_keybind)
+		last_control_height = control_height + 7;
+
+	if (is_keybind || (is_color && Label == "")) {
+		y -= last_control_height;
+		x = m_x + m_iWidth - 36;
+	}
+	if (is_color && Label != "")
+		x = m_x + m_iWidth - 36;
+	if (is_checkbox)
+		x -= 24;
+
+	control->SetPosition(x, is_checkbox ? y + 1 : y);
+	control->SetSize(m_iWidth - (38 * 2), control_height);
+	control->parent_group = this;
+	control->g_tab = g_tab ? g_tab : 0;
+	Tab->RegisterControl(control);
+
+	if (!is_keybind) {
+		if (!is_color || is_color && Label != "")
+			last_y += control_height + 7;
+	}
+}
+
+void CGroupBoxNultiTabs::AddTab(CGroupTab t)
+{
+	group_tabs.push_back(t);
+
+	if (selected_tab == 0)
+		selected_tab++;
+}
+void CGroupBoxNultiTabs::OnUpdate() {}
+void CGroupBoxNultiTabs::OnClick() {}
+#pragma endregion Implementations of the Group Box functions
+
 #pragma region Sliders
 CSlider::CSlider()
 {

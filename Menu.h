@@ -205,6 +205,9 @@ class CExtraTab : public CTab
 {
 public:
 	void Setup();
+	CGroupBoxNultiTabs GroupBoxTest;
+	CCheckBox TestCheckbox;
+	CCheckBox TestCheckbox2;
 };
 
 class CExtraTab2 : public CTab

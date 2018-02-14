@@ -27,28 +27,13 @@ void CGUI::Draw()
 
 	if (ShouldDrawCursor)
 	{
-		Render::Clear(Mouse.x + 1, Mouse.y, 1, 17, Color(3, 6, 26, 255));
-		for (int i = 0; i < 11; i++)
-			Render::Clear(Mouse.x + 2 + i, Mouse.y + 1 + i, 1, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 8, Mouse.y + 12, 5, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 8, Mouse.y + 13, 1, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 9, Mouse.y + 14, 1, 2, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 10, Mouse.y + 16, 1, 2, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 8, Mouse.y + 18, 2, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 7, Mouse.y + 16, 1, 2, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 6, Mouse.y + 14, 1, 2, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 5, Mouse.y + 13, 1, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 4, Mouse.y + 14, 1, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 3, Mouse.y + 15, 1, 1, Color(3, 6, 26, 255));
-		Render::Clear(Mouse.x + 2, Mouse.y + 16, 1, 1, Color(3, 6, 26, 255));
-		for (int i = 0; i < 4; i++)
-			Render::Clear(Mouse.x + 2 + i, Mouse.y + 2 + i, 1, 14 - (i * 2), Color(123, 194, 21, 255));
-		Render::Clear(Mouse.x + 6, Mouse.y + 6, 1, 8, Color(123, 194, 21, 255));
-		Render::Clear(Mouse.x + 7, Mouse.y + 7, 1, 9, Color(123, 194, 21, 255));
-		for (int i = 0; i < 4; i++)
-			Render::Clear(Mouse.x + 8 + i, Mouse.y + 8 + i, 1, 4 - i, Color(123, 194, 21, 255));
-		Render::Clear(Mouse.x + 8, Mouse.y + 14, 1, 4, Color(123, 194, 21, 255));
-		Render::Clear(Mouse.x + 9, Mouse.y + 16, 1, 2, Color(123, 194, 21, 255));
+		static Vertex_t MouseVt[3];
+
+		MouseVt[0].Init(Vector2D(Mouse.x, Mouse.y));
+		MouseVt[1].Init(Vector2D(Mouse.x + 10, Mouse.y));
+		MouseVt[2].Init(Vector2D(Mouse.x, Mouse.y + 10));
+
+		Render::Polygon(3, MouseVt, Color(230, 230, 230, 255));
 	}
 }
 
@@ -154,55 +139,116 @@ void CGUI::Update()
 				{
 					if (window->FocusedControl != nullptr)
 					{
-						// We've processed it once, skip it later
-						SkipWidget = true;
-						SkipMe = window->FocusedControl;
+						CControl* control = window->FocusedControl;
+						CGroupBoxNultiTabs* group;
+						if (control->FileControlType != UIControlTypes::UIC_GroupBox) group = control->parent_group ? (CGroupBoxNultiTabs*)control->parent_group : nullptr;
 
-						POINT cAbs = window->FocusedControl->GetAbsolutePos();
-						RECT controlRect = { cAbs.x, cAbs.y, window->FocusedControl->m_iWidth, window->FocusedControl->m_iHeight };
-						window->FocusedControl->OnUpdate();
-
-						if (window->FocusedControl->Flag(UIFlags::UI_Clickable) && IsMouseInRegion(controlRect) && bCheckWidgetClicks)
+						if (group != nullptr && control->FileControlType != UIControlTypes::UIC_GroupBox)
 						{
-							window->FocusedControl->OnClick();
+							if ((group->group_tabs.size() > 0 && control->g_tab == group->selected_tab) || group->group_tabs.size() == 0)
+							{
+								// We've processed it once, skip it later
+								SkipWidget = true;
+								SkipMe = window->FocusedControl;
 
-							// If it gets clicked we loose focus
-							window->IsFocusingControl = false;
-							window->FocusedControl = nullptr;
-							bCheckWidgetClicks = false;
+								POINT cAbs = window->FocusedControl->GetAbsolutePos();
+								RECT controlRect = { cAbs.x, cAbs.y, window->FocusedControl->m_iWidth, window->FocusedControl->m_iHeight };
+								window->FocusedControl->OnUpdate();
+
+								if (window->FocusedControl->Flag(UIFlags::UI_Clickable) && IsMouseInRegion(controlRect) && bCheckWidgetClicks)
+								{
+									window->FocusedControl->OnClick();
+
+									bCheckWidgetClicks = false;
+								}
+							}
+						}
+						else if (control->FileControlType == UIControlTypes::UIC_GroupBox || control->FileControlType != UIControlTypes::UIC_GroupBox && !control->parent_group)
+						{
+							// We've processed it once, skip it later
+							SkipWidget = true;
+							SkipMe = window->FocusedControl;
+
+							POINT cAbs = window->FocusedControl->GetAbsolutePos();
+							RECT controlRect = { cAbs.x, cAbs.y, window->FocusedControl->m_iWidth, window->FocusedControl->m_iHeight };
+							window->FocusedControl->OnUpdate();
+
+							if (window->FocusedControl->Flag(UIFlags::UI_Clickable) && IsMouseInRegion(controlRect) && bCheckWidgetClicks)
+							{
+								window->FocusedControl->OnClick();
+
+								// If it gets clicked we loose focus
+								window->IsFocusingControl = false;
+								window->FocusedControl = nullptr;
+								bCheckWidgetClicks = false;
+							}
 						}
 					}
 				}
-
 				// Itterate over the rest of the control
 				for (auto control : window->SelectedTab->Controls)
 				{
 					if (control != nullptr)
 					{
-						if (SkipWidget && SkipMe == control)
-							continue;
+						CGroupBoxNultiTabs* group;
+						if (control->FileControlType != UIControlTypes::UIC_GroupBox) group = control->parent_group ? (CGroupBoxNultiTabs*)control->parent_group : nullptr;
 
-						POINT cAbs = control->GetAbsolutePos();
-						RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
-						control->OnUpdate();
-
-						if (control->Flag(UIFlags::UI_Clickable) && IsMouseInRegion(controlRect) && bCheckWidgetClicks)
+						if (group != nullptr && control->FileControlType != UIControlTypes::UIC_GroupBox)
 						{
-							control->OnClick();
-							bCheckWidgetClicks = false;
-
-							// Change of focus
-							if (control->Flag(UIFlags::UI_Focusable))
+							if (group->group_tabs.size() > 0 && control->g_tab == group->selected_tab || group->group_tabs.size() == 0)
 							{
-								window->IsFocusingControl = true;
-								window->FocusedControl = control;
-							}
-							else
-							{
-								window->IsFocusingControl = false;
-								window->FocusedControl = nullptr;
-							}
+								if (SkipWidget && SkipMe == control)
+									continue;
 
+								POINT cAbs = control->GetAbsolutePos();
+								RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
+								control->OnUpdate();
+
+								if (control->Flag(UIFlags::UI_Clickable) && IsMouseInRegion(controlRect) && bCheckWidgetClicks)
+								{
+									control->OnClick();
+									bCheckWidgetClicks = false;
+
+									// Change of focus
+									if (control->Flag(UIFlags::UI_Focusable))
+									{
+										window->IsFocusingControl = true;
+										window->FocusedControl = control;
+									}
+									else
+									{
+										window->IsFocusingControl = false;
+										window->FocusedControl = nullptr;
+									}
+								}
+							}
+						}
+						else if (control->FileControlType == UIControlTypes::UIC_GroupBox || control->FileControlType != UIControlTypes::UIC_GroupBox && !control->parent_group)
+						{
+							if (SkipWidget && SkipMe == control)
+								continue;
+
+							POINT cAbs = control->GetAbsolutePos();
+							RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
+							control->OnUpdate();
+
+							if (control->Flag(UIFlags::UI_Clickable) && IsMouseInRegion(controlRect) && bCheckWidgetClicks)
+							{
+								control->OnClick();
+								bCheckWidgetClicks = false;
+
+								// Change of focus
+								if (control->Flag(UIFlags::UI_Focusable))
+								{
+									window->IsFocusingControl = true;
+									window->FocusedControl = control;
+								}
+								else
+								{
+									window->IsFocusingControl = false;
+									window->FocusedControl = nullptr;
+								}
+							}
 						}
 					}
 				}
@@ -259,12 +305,14 @@ bool CGUI::DrawWindow(CWindow* window)
 	int _width = window->m_iWidth - 16;
 	int _height = window->m_iHeight - 236;
 
-	Render::Clear(window->m_x, window->m_y, window->m_iWidth, window->m_iHeight, Color(29, 29, 29, 255)); // Main Background
+	Render::Clear(window->m_x, window->m_y, window->m_iWidth, window->m_iHeight, Color(27, 27, 27, 255)); // Main Background
 	Render::Outline(window->m_x, window->m_y, window->m_iWidth, window->m_iHeight - 2, Color(0, 0, 0, 255)); // Main Outline
-	Render::Outline(window->m_x, window->m_y + 20, window->m_iWidth, 1, Color(0, 0, 0, 255)); // Main Outline
-	Render::Outline(window->m_x, window->m_y + window->m_iHeight - 21, window->m_iWidth, 1, Color(0, 0, 0, 255)); // bottom outline
+	Render::Outline(window->m_x, window->m_y + 20, window->m_iWidth, 1, Color(0, 0, 0, 255)); // Top Border
+	Render::Outline(window->m_x, window->m_y + window->m_iHeight - 22, window->m_iWidth, 1, Color(0, 0, 0, 255)); // bottom outline
+	Render::Line(window->m_x + 79, window->m_y + 20, window->m_x + 79, window->m_y + window->m_iHeight - 22, Color(0, 0, 0, 255)); // tab outline
 
-
+	Render::Text(window->m_x + 6, window->m_y + 2, Color(255, 255, 255, 255), Render::Fonts::Menu, "csgo hvh hack - " __DATE__);
+	Render::Text(window->m_x + 6, window->m_y + window->m_iHeight - 20, Color(255, 255, 255, 255), Render::Fonts::Menu, "copyright (c) styles (dont hex edit)");
 
 	int TabCount = window->Tabs.size();
 	if (TabCount)
@@ -283,9 +331,9 @@ bool CGUI::DrawWindow(CWindow* window)
 			float intercept = (yWinHeight - 40) / (TabCount + 1);
 			int factor = i;
 
-			yAxis = yWinPos + 27 + (factor * 77) - 10 + 20;
+			yAxis = window->m_y + 26 + (factor * 25);
 
-			RECT TabDrawArea = { window->m_x + 6, yAxis - 5, 75, 77 };
+			RECT TabDrawArea = { window->m_x + 1, yAxis - 5, 69, 24 };
 
 			RECT TextSize;
 			TextSize = Render::get_text_size(tab->Title.c_str(), Render::Fonts::TabIcon);
@@ -306,32 +354,16 @@ bool CGUI::DrawWindow(CWindow* window)
 			}
 
 			xAxis = _x - (45 + TextSize.right / 2);
-			if (IsMouseInRegion(TabDrawArea) && window->SelectedTab != tab) {
-				Render::Text(TabDrawArea.left + (TabDrawArea.right / 2) - (TextSize.right / 2), TabDrawArea.top + (TabDrawArea.bottom / 2) - (TextSize.bottom / 2), Color(190, 190, 190, 255),  Render::Fonts::TabIcon, tab->Title.c_str());
-			}
-			else if (window->SelectedTab == tab) {
-				Render::Clear(TabDrawArea.left, TabDrawArea.top, TabDrawArea.right, TabDrawArea.bottom, Color(17, 17, 17, 255));
-				Render::Line(TabDrawArea.left, TabDrawArea.top - 1, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top - 1, Color(0, 0, 0, 255));
-			    Render::Line(TabDrawArea.left, TabDrawArea.top, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top, Color(48, 48, 48, 255));
-				Render::Line(TabDrawArea.left, TabDrawArea.top + TabDrawArea.bottom, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top + TabDrawArea.bottom, Color(48, 48, 48, 255));
-				Render::Line(TabDrawArea.left, TabDrawArea.top + TabDrawArea.bottom, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top + TabDrawArea.bottom, Color(48, 48, 48, 255));
-				Render::Line(TabDrawArea.left, TabDrawArea.top + TabDrawArea.bottom + 1, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top + TabDrawArea.bottom + 1, Color(0, 0, 0, 255));
-
-
-				Render::Text(TabDrawArea.left + (TabDrawArea.right / 2) - (TextSize.right / 2), TabDrawArea.top + (TabDrawArea.bottom / 2) - (TextSize.bottom / 2), Color(210, 210, 210, 255), Render::Fonts::TabIcon, tab->Title.c_str());
-
-			
-			
-				Render::Line(TabDrawArea.left + TabDrawArea.right - 2, window->m_y + 10, TabDrawArea.left + TabDrawArea.right - 1, TabDrawArea.top, Color(0, 0, 0, 255));
-				Render::Line(TabDrawArea.left + TabDrawArea.right, window->m_y + 10, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top, Color(48, 48, 48, 255));
-
-				Render::Line(TabDrawArea.left + TabDrawArea.right - 2, TabDrawArea.top + TabDrawArea.bottom, TabDrawArea.left + TabDrawArea.right - 1, window->m_y + window->m_iHeight - 6, Color(0, 0, 0, 255));
-				Render::Line(TabDrawArea.left + TabDrawArea.right, TabDrawArea.top + TabDrawArea.bottom, TabDrawArea.left + TabDrawArea.right, window->m_y + window->m_iHeight - 6, Color(48, 48, 48, 255));
+			if (window->SelectedTab == tab) {
+				Render::Clear(TabDrawArea.left, TabDrawArea.top, TabDrawArea.right, TabDrawArea.bottom, Color(50, 50, 50, 255));
+				Render::Clear(TabDrawArea.left + TabDrawArea.right, TabDrawArea.top, 9, TabDrawArea.bottom, Color(0, 129, 255, 255));
 			}
 			else {
-				Render::Text(TabDrawArea.left + (TabDrawArea.right / 2) - (TextSize.right / 2), TabDrawArea.top + (TabDrawArea.bottom / 2) - (TextSize.bottom / 2), Color(90, 90, 90, 255), Render::Fonts::TabIcon, tab->Title.c_str());
+				Render::Clear(TabDrawArea.left, TabDrawArea.top, TabDrawArea.right, TabDrawArea.bottom, Color(121, 121, 121, 255));
 			}
-
+			Render::Line(TabDrawArea.left + TabDrawArea.right, TabDrawArea.top, TabDrawArea.left + TabDrawArea.right, TabDrawArea.top + TabDrawArea.bottom, Color(0, 0, 0, 255));
+			Render::Line(TabDrawArea.left, TabDrawArea.top + TabDrawArea.bottom, TabDrawArea.left + TabDrawArea.right + 10, TabDrawArea.top + TabDrawArea.bottom, Color(0, 0, 0, 255));
+			Render::Text(TabDrawArea.left + 5, TabDrawArea.top + 1, Color(255, 255, 255, 255), Render::Fonts::Menu, tab->Title.c_str());
 			int width = _width;
 		}
 	}
@@ -349,9 +381,24 @@ bool CGUI::DrawWindow(CWindow* window)
 		{
 			if (window->FocusedControl != nullptr)
 			{
-				// We need to draw it last, so skip it in the regular loop
-				SkipWidget = true;
-				SkipMe = window->FocusedControl;
+				CControl* control = window->FocusedControl;
+				CGroupBoxNultiTabs* group;
+				if (control->FileControlType != UIControlTypes::UIC_GroupBox) group = control->parent_group ? (CGroupBoxNultiTabs*)control->parent_group : nullptr;
+
+				if (group != nullptr && control->FileControlType != UIControlTypes::UIC_GroupBox)
+				{
+					if (group->group_tabs.size() > 0 && control->g_tab == group->selected_tab || group->group_tabs.size() == 0)
+					{
+						SkipWidget = true;
+						SkipMe = window->FocusedControl;
+					}
+				}
+				else if (control->FileControlType == UIControlTypes::UIC_GroupBox || control->FileControlType != UIControlTypes::UIC_GroupBox && !control->parent_group)
+				{
+
+					SkipWidget = true;
+					SkipMe = window->FocusedControl;
+				}
 			}
 		}
 
@@ -364,12 +411,35 @@ bool CGUI::DrawWindow(CWindow* window)
 
 			if (control != nullptr && control->Flag(UIFlags::UI_Drawable))
 			{
-				POINT cAbs = control->GetAbsolutePos();
-				RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
-				bool hover = false;
-				if (IsMouseInRegion(controlRect))
-					hover = true;
-				control->Draw(hover);
+				CGroupBoxNultiTabs* group;
+				if (control->FileControlType != UIControlTypes::UIC_GroupBox) group = control->parent_group ? (CGroupBoxNultiTabs*)control->parent_group : nullptr;
+
+				if (group != nullptr && control->FileControlType != UIControlTypes::UIC_GroupBox)
+				{
+					if (group->group_tabs.size() > 0 && control->g_tab == group->selected_tab || group->group_tabs.size() == 0)
+					{
+						POINT cAbs = control->GetAbsolutePos();
+						RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
+						bool hover = false;
+						if (IsMouseInRegion(controlRect))
+						{
+							hover = true;
+						}
+						control->Draw(hover);
+					}
+				}
+				else if (control->FileControlType == UIControlTypes::UIC_GroupBox || control->FileControlType != UIControlTypes::UIC_GroupBox && !control->parent_group)
+				{
+
+					POINT cAbs = control->GetAbsolutePos();
+					RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
+					bool hover = false;
+					if (IsMouseInRegion(controlRect))
+					{
+						hover = true;
+					}
+					control->Draw(hover);
+				}
 			}
 		}
 
@@ -380,15 +450,38 @@ bool CGUI::DrawWindow(CWindow* window)
 
 			if (control != nullptr && control->Flag(UIFlags::UI_Drawable))
 			{
-				POINT cAbs = control->GetAbsolutePos();
-				RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
-				bool hover = false;
-				if (IsMouseInRegion(controlRect))
-					hover = true;
-				control->Draw(hover);
+				CControl* control = window->FocusedControl;
+				CGroupBoxNultiTabs* group;
+				if (control->FileControlType != UIControlTypes::UIC_GroupBox) group = control->parent_group ? (CGroupBoxNultiTabs*)control->parent_group : nullptr;
+
+				if (group != nullptr && control->FileControlType != UIControlTypes::UIC_GroupBox)
+				{
+					if (group->group_tabs.size() > 0 && control->g_tab == group->selected_tab || group->group_tabs.size() == 0)
+					{
+						POINT cAbs = control->GetAbsolutePos();
+						RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
+						bool hover = false;
+						if (IsMouseInRegion(controlRect))
+						{
+							hover = true;
+						}
+						control->Draw(hover);
+					}
+				}
+				else if (control->FileControlType == UIControlTypes::UIC_GroupBox || control->FileControlType != UIControlTypes::UIC_GroupBox && !control->parent_group)
+				{
+
+					POINT cAbs = control->GetAbsolutePos();
+					RECT controlRect = { cAbs.x, cAbs.y, control->m_iWidth, control->m_iHeight };
+					bool hover = false;
+					if (IsMouseInRegion(controlRect))
+					{
+						hover = true;
+					}
+					control->Draw(hover);
+				}
 			}
 		}
-
 	}
 	return true;
 }
