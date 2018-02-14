@@ -12,7 +12,7 @@
 Vector LastAngleAA;
 
 // Funtion Typedefs
-typedef void(__thiscall* DrawModelEx_)(void*, void*, void*, const ModelRenderInfo_t&, matrix3x4*);
+typedef void(__thiscall* DrawModelEx_)(void*, void*, void*, const ModelRenderInfo_t&, matrix3x4*); //
 typedef void(__thiscall* PaintTraverse_)(PVOID, unsigned int, bool, bool);
 typedef bool(__thiscall* InPrediction_)(PVOID);
 typedef void(__stdcall *FrameStageNotifyFn)(ClientFrameStage_t);
